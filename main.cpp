@@ -11,9 +11,6 @@ class Node {
             this->neighbours = new std::vector <Node*>;
             this->neighbours->push_back(this);
         };
-        // Node() {
-        //     this->neighbours = new std::vector <Node*>;
-        // };
         bool hasNeighbour(std::string name);
         void mergeNeighbours(Node *that);
 
@@ -71,14 +68,29 @@ std::vector <std::string> stringSplit(std::string str, std::string delimeter) {
     return result;
 }
 
-bool compareByWeight(const Link &a, const Link &b)
-{
-    return a.weight < b.weight;
+
+void sortLinks(std::vector <Link> *graph, bool cmp(Link a, Link b)) {
+    for (int i = 0; i < graph->size(); i++) {
+        for (int j = i; j < graph->size(); j++) {
+            if (i == j)
+                continue;
+            if (cmp((*graph)[i], (*graph)[j])) {
+                Link tmp = (*graph)[i];
+                (*graph)[i] = (*graph)[j];
+                (*graph)[j] = tmp;
+            }
+        }
+    }
 }
 
-bool compareByName(const Link &a, const Link &b)
+bool compareByWeight(Link a, Link b)
 {
-    return a.a->name < b.a->name || (a.a->name == b.a->name && a.b->name < a.b->name);
+    return a.weight > b.weight;
+}
+
+bool compareByName(Link a, Link b)
+{
+    return a.a->name > b.a->name || (a.a->name == b.a->name && a.b->name > a.b->name);
 }
 
 std::vector <Link> parseStringVector(std::vector <std::string> strings) {
@@ -114,7 +126,7 @@ std::vector <Link> parseStringVector(std::vector <std::string> strings) {
 
         result.push_back(Link(a, b, std::atoi(split[2].c_str())));
     }
-    std::sort(result.begin(), result.end(), compareByWeight);
+    sortLinks(&result, compareByWeight);
     return result;
 }
 
@@ -151,7 +163,7 @@ int main(int ac, char *av[]) {
         result.push_back(graph[i]);
     }
 
-    std::sort(result.begin(), result.end(), compareByName);
+    sortLinks(&result, compareByName);
     for (int i = 0; i < result.size(); i++) {
         std::cout << result[i].a->name << " " << result[i].b->name << "\n";
     }
