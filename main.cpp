@@ -4,18 +4,74 @@
 #include <sstream>
 #include <algorithm>
 
+template <typename T>
+class Array {
+private:
+    T* ptr;
+    int size;
+  
+public:
+    Array(T arr[], int s);
+    Array();
+    void push_back(T elem);
+    int getSize();
+    T& operator[] (const int index);
+};
+  
+template <typename T>
+Array<T>::Array(T arr[], int s)
+{
+    ptr = new T[s];
+    size = s;
+    for (int i = 0; i < size; i++)
+        ptr[i] = arr[i];
+}
+
+template <typename T>
+Array<T>::Array()
+{
+    size = 0;
+    ptr = NULL;
+}
+
+template <typename T>
+void Array<T>::push_back(T elem)
+{
+    T *res;
+
+    size++;
+    res = new T[size];
+    if (ptr != NULL) {
+        for (int i = 0; i < size - 1; i++) res[i] = ptr[i];
+    }
+    res[size - 1] = elem;
+    ptr = res;
+}
+
+template <typename T>
+int Array<T>::getSize()
+{
+    return size;
+}
+
+template <typename T>
+T& Array<T>::operator[] (const int index)
+{
+    return ptr[index];
+}
+
 class Node {
     public:
         Node(std::string name) {
             this->name = name;
-            this->neighbours = new std::vector <Node*>;
+            this->neighbours = new Array <Node*>;
             this->neighbours->push_back(this);
         };
         bool hasNeighbour(std::string name);
         void mergeNeighbours(Node *that);
 
         std::string name;
-        std::vector <Node*> *neighbours;
+        Array <Node*> *neighbours;
 };
 
 class Link {
@@ -25,6 +81,11 @@ class Link {
             this->b = b;
             this->weight = weight;
         };
+        Link() {
+            this->a = NULL;
+            this->b = NULL;
+            this->weight = 0;
+        };
 
         Node *a;
         Node *b;
@@ -32,7 +93,7 @@ class Link {
 };
 
 bool Node::hasNeighbour(std::string name) {
-    for (int i = 0; i < neighbours->size(); i++) {
+    for (int i = 0; i < neighbours->getSize(); i++) {
         if ((*neighbours)[i]->name == name)
             return true;
     }
@@ -40,12 +101,12 @@ bool Node::hasNeighbour(std::string name) {
 }
 
 void Node::mergeNeighbours(Node *that) {
-    for (int i = 0; i < that->neighbours->size(); i++) {
+    for (int i = 0; i < that->neighbours->getSize(); i++) {
         if (!hasNeighbour((*that->neighbours)[i]->name)) {
             neighbours->push_back((*that->neighbours)[i]);
         }
     }
-    for (int i = 0; i < neighbours->size(); i++) {
+    for (int i = 0; i < neighbours->getSize(); i++) {
         Node *node = (*neighbours)[i];
         node->neighbours = neighbours;
     }
@@ -53,8 +114,8 @@ void Node::mergeNeighbours(Node *that) {
     that->neighbours = neighbours;
 }
 
-std::vector <std::string> stringSplit(std::string str, std::string delimeter) {
-    std::vector <std::string> result;
+Array <std::string> stringSplit(std::string str, std::string delimeter) {
+    Array <std::string> result;
 
     size_t pos = 0;
     std::string token;
@@ -69,9 +130,9 @@ std::vector <std::string> stringSplit(std::string str, std::string delimeter) {
 }
 
 
-void sortLinks(std::vector <Link> *graph, bool cmp(Link a, Link b)) {
-    for (int i = 0; i < graph->size(); i++) {
-        for (int j = i; j < graph->size(); j++) {
+void sortLinks(Array <Link> *graph, bool cmp(Link a, Link b)) {
+    for (int i = 0; i < graph->getSize(); i++) {
+        for (int j = i; j < graph->getSize(); j++) {
             if (i == j)
                 continue;
             if (cmp((*graph)[i], (*graph)[j])) {
@@ -93,18 +154,18 @@ bool compareByName(Link a, Link b)
     return a.a->name > b.a->name || (a.a->name == b.a->name && a.b->name > a.b->name);
 }
 
-std::vector <Link> parseStringVector(std::vector <std::string> strings) {
-    std::vector <Link> result;
-    std::vector <Node*> nodes;
+Array <Link> parseStringVector(Array <std::string> strings) {
+    Array <Link> result;
+    Array <Node*> nodes;
 
-    for (int i = 0; i < strings.size(); i++) {
-        std::vector <std::string> split = stringSplit(strings[i], " ");
-        if (split.size() != 3) {
+    for (int i = 0; i < strings.getSize(); i++) {
+        Array <std::string> split = stringSplit(strings[i], " ");
+        if (split.getSize() != 3) {
             std::cout << "Wrong format of input on string " << i + 1 << ":\n" << strings[i] << "\n";
             exit(1);
         }
         Node *a = NULL, *b = NULL;
-        for (int i = 0; i < nodes.size(); i++) {
+        for (int i = 0; i < nodes.getSize(); i++) {
             if (nodes[i]->name == split[0]) {
                 a = nodes[i];
             }
@@ -130,7 +191,7 @@ std::vector <Link> parseStringVector(std::vector <std::string> strings) {
     return result;
 }
 
-std::vector <Link> readFromStdin(int ac, char *av[]) {
+Array <Link> readFromStdin(int ac, char *av[]) {
     if (ac == 2) {
         std::ifstream t(av[1]);
         std::stringstream buffer;
@@ -139,7 +200,7 @@ std::vector <Link> readFromStdin(int ac, char *av[]) {
 
         return parseStringVector(stringSplit(buffer.str(), "\n"));
     }
-    std::vector <std::string> buffer;
+    Array <std::string> buffer;
     for (std::string line; std::getline(std::cin, line);) {
         buffer.push_back(line);
     }
@@ -147,11 +208,11 @@ std::vector <Link> readFromStdin(int ac, char *av[]) {
 }
 
 int main(int ac, char *av[]) {
-    std::vector <Link> graph = readFromStdin(ac, av);
+    Array <Link> graph = readFromStdin(ac, av);
     int totalWeight = 0;
-    std::vector <Link> result;
+    Array <Link> result;
 
-    for (int i = 0; i < graph.size(); i++) {
+    for (int i = 0; i < graph.getSize(); i++) {
         Node *a = graph[i].a, *b = graph[i].b;
         int weight = graph[i].weight;
         if (a->neighbours == b->neighbours) {
@@ -164,7 +225,7 @@ int main(int ac, char *av[]) {
     }
 
     sortLinks(&result, compareByName);
-    for (int i = 0; i < result.size(); i++) {
+    for (int i = 0; i < result.getSize(); i++) {
         std::cout << result[i].a->name << " " << result[i].b->name << "\n";
     }
     std::cout << totalWeight << "\n";
